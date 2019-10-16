@@ -5,6 +5,7 @@
 
 ## 如何使用
 首先，基于社区MongoDB镜像，定制化镜像，用于集群key认证
+
 生成keyfile
 ```
 openssl rand -base64 741 > mongodb-keyfile
