@@ -1,0 +1,83 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: mongo-default-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: infra
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name     : mongo-prod
+  namespace: infra
+spec:
+  replicas: 3
+  serviceName : mongo-prod
+  template:
+    metadata:
+      labels:
+        app: mongo-prod
+        environment: prod
+    spec: 
+      imagePullSecrets:
+        - name: regsecret
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mongo-prod
+          image: youer-registry-address/mongodb:4.1.7
+          imagePullPolicy: "Always"
+          args: 
+            - mongod
+            - "--replSet"
+            - rs0
+            - "--bind_ip"
+            - 0.0.0.0
+            - --auth
+            - --clusterAuthMode
+            - keyFile
+            - --keyFile
+            - /data/config/mongodb-keyfile
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: "admin"
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: "123456"
+          ports:
+            - containerPort: 27017 
+          volumeMounts:
+            - name     : mongo-prod
+              mountPath: "/data/db"
+        - name: mongo-sidecar
+          image: cvallance/mongo-k8s-sidecar:latest
+          imagePullPolicy: "Always"
+          env:
+            - name: MONGO_SIDECAR_POD_LABELS
+              value: "app=mongo-prod,environment=prod"
+            - name: KUBERNETES_MONGO_SERVICE_NAME
+              value: "mongo-prod"
+            - name: MONGODB_USERNAME
+              value: "admin"
+            - name: MONGODB_PASSWORD
+              value: "123456"
+            - name: MONGODB_DATABASE
+              value: admin
+            - name: MONGO_PORT
+              value: "27017"
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-prod
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: alicloud-disk-common-hangzhou-b
+      resources:
+        requests:
+          storage: 40Gi
+
