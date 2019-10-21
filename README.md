@@ -13,7 +13,7 @@ openssl rand -base64 741 > mongodb-keyfile
 
 构建镜像
 ```
-docker build -t $youer-registery-address/mongodb:4.1.7 .
+docker build -t $your-registery-address/mongodb:4.1.7 .
 ```
 
 使用K8s部署一主多从三个副本的MongoDB集群，并使用阿里云的NAS存储实现数据持久化存储。您也可以根据自己实际环境，修改即可
